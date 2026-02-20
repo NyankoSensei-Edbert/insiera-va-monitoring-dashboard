@@ -1,0 +1,1333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>INSIERA-VA · Monitoring Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --surface: #0f1218;
+    --surface2: #151a22;
+    --surface3: #1c2330;
+    --border: #1e2a3a;
+    --border2: #253040;
+    --accent: #00d4ff;
+    --accent2: #0099cc;
+    --accent-glow: rgba(0,212,255,0.15);
+    --green: #00e676;
+    --green-dim: rgba(0,230,118,0.12);
+    --orange: #ffab40;
+    --orange-dim: rgba(255,171,64,0.12);
+    --red: #ff5252;
+    --red-dim: rgba(255,82,82,0.12);
+    --muted: #4a5568;
+    --muted2: #2d3748;
+    --text: #e2e8f0;
+    --text2: #94a3b8;
+    --text3: #64748b;
+    --mono: 'JetBrains Mono', monospace;
+    --sans: 'Syne', sans-serif;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated grid background */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Header */
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(10,12,16,0.95);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 24px;
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    height: 56px;
+  }
+
+  .logo {
+    font-family: var(--sans);
+    font-weight: 800;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+    color: var(--accent);
+    text-shadow: 0 0 20px var(--accent-glow);
+    flex-shrink: 0;
+  }
+
+  .logo span { color: var(--text3); font-weight: 400; }
+
+  .header-divider { width: 1px; height: 24px; background: var(--border); }
+
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    flex: 1;
+  }
+
+  .nav-tab {
+    padding: 6px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text3);
+    font-size: 12px;
+    font-weight: 500;
+    font-family: var(--mono);
+    transition: all 0.2s;
+    border: none;
+    background: none;
+    letter-spacing: 0.02em;
+  }
+
+  .nav-tab:hover { color: var(--text2); background: var(--surface2); }
+  .nav-tab.active { color: var(--accent); background: var(--accent-glow); }
+
+  .header-right {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-left: auto;
+  }
+
+  .api-config {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .api-config label { color: var(--text3); font-size: 10px; }
+  .api-config input {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 180px;
+    outline: none;
+  }
+
+  .token-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+  }
+
+  .token-input label { color: var(--text3); font-size: 10px; }
+  .token-input input {
+    background: none;
+    border: none;
+    color: var(--orange);
+    font-family: var(--mono);
+    font-size: 11px;
+    width: 140px;
+    outline: none;
+  }
+
+  /* Main layout */
+  .main {
+    position: relative;
+    z-index: 1;
+    padding: 24px;
+    max-width: 1600px;
+    margin: 0 auto;
+  }
+
+  /* Stats bar */
+  .stats-bar {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+    animation: fadeInUp 0.4s ease both;
+  }
+
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .stat-card:hover { border-color: var(--border2); }
+
+  .stat-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    flex-shrink: 0;
+  }
+
+  .stat-icon.blue { background: var(--accent-glow); }
+  .stat-icon.green { background: var(--green-dim); }
+  .stat-icon.orange { background: var(--orange-dim); }
+  .stat-icon.red { background: var(--red-dim); }
+
+  .stat-info { flex: 1; min-width: 0; }
+  .stat-value {
+    font-family: var(--sans);
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .stat-label { color: var(--text3); font-size: 11px; }
+
+  /* Tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeInUp 0.3s ease; }
+
+  /* Filter bar */
+  .filter-bar {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+
+  .filter-group { display: flex; flex-direction: column; gap: 4px; }
+  .filter-group label { color: var(--text3); font-size: 10px; letter-spacing: 0.06em; text-transform: uppercase; }
+
+  .filter-input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 10px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    min-width: 160px;
+  }
+
+  .filter-input:focus {
+    border-color: var(--accent2);
+    box-shadow: 0 0 0 2px rgba(0,153,204,0.15);
+  }
+
+  .filter-input::placeholder { color: var(--text3); }
+
+  .btn {
+    padding: 7px 14px;
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: none;
+    letter-spacing: 0.02em;
+  }
+
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: #33ddff; box-shadow: 0 0 16px rgba(0,212,255,0.4); }
+
+  .btn-ghost {
+    background: var(--surface2);
+    color: var(--text2);
+    border: 1px solid var(--border);
+  }
+  .btn-ghost:hover { border-color: var(--border2); color: var(--text); }
+
+  .btn-danger {
+    background: var(--red-dim);
+    color: var(--red);
+    border: 1px solid rgba(255,82,82,0.2);
+  }
+  .btn-danger:hover { background: rgba(255,82,82,0.2); }
+
+  .btn-success {
+    background: var(--green-dim);
+    color: var(--green);
+    border: 1px solid rgba(0,230,118,0.2);
+    font-size: 11px;
+    padding: 5px 10px;
+  }
+  .btn-success:hover { background: rgba(0,230,118,0.22); }
+
+  /* Table wrapper */
+  .table-wrap {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  .table-header {
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .table-title {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text);
+  }
+
+  .table-meta { color: var(--text3); font-size: 11px; }
+
+  .table-scroll { overflow-x: auto; }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+
+  thead th {
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    background: var(--surface2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  thead th:hover { color: var(--text2); }
+  thead th.sorted { color: var(--accent); }
+
+  tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+    cursor: pointer;
+  }
+
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--surface2); }
+  tbody tr.expanded { background: var(--surface2); }
+
+  tbody td {
+    padding: 12px 16px;
+    color: var(--text2);
+    vertical-align: middle;
+  }
+
+  .group-id {
+    font-weight: 600;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+
+  /* Badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .badge-open { background: var(--green-dim); color: var(--green); border: 1px solid rgba(0,230,118,0.2); }
+  .badge-closed { background: var(--muted2); color: var(--text3); border: 1px solid var(--border); }
+  .badge-created { background: var(--accent-glow); color: var(--accent); border: 1px solid rgba(0,212,255,0.2); }
+  .badge-up { background: var(--green-dim); color: var(--green); }
+  .badge-down { background: var(--red-dim); color: var(--red); }
+  .badge-queued { background: var(--orange-dim); color: var(--orange); }
+  .badge-empty { background: var(--surface3); color: var(--text3); border: 1px solid var(--border); }
+
+  .badge::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  /* Project counts */
+  .proj-counts { display: flex; gap: 6px; align-items: center; }
+  .proj-pill {
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 3px;
+  }
+  .proj-infra { background: rgba(0,212,255,0.1); color: var(--accent); }
+  .proj-web { background: rgba(255,171,64,0.1); color: var(--orange); }
+  .proj-code { background: rgba(0,230,118,0.1); color: var(--green); }
+
+  /* Expanded row */
+  .expand-row td {
+    padding: 0;
+    background: var(--bg);
+  }
+
+  .expand-content {
+    border-top: 1px solid var(--border);
+    padding: 16px 20px;
+  }
+
+  .expand-title {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text3);
+    margin-bottom: 12px;
+  }
+
+  .activity-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 10px;
+  }
+
+  .activity-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+    transition: border-color 0.2s;
+  }
+
+  .activity-card:hover { border-color: var(--border2); }
+
+  .activity-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+  }
+
+  .activity-id { font-size: 11px; font-weight: 600; color: var(--text); }
+  .scanner-badge {
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .scanner-nessus { background: rgba(0,212,255,0.12); color: var(--accent); }
+  .scanner-acunetix { background: rgba(255,171,64,0.12); color: var(--orange); }
+  .scanner-sonarqube { background: rgba(0,230,118,0.12); color: var(--green); }
+  .scanner-default { background: var(--surface3); color: var(--text3); }
+
+  .activity-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 4px;
+    font-size: 11px;
+  }
+
+  .activity-row .key { color: var(--text3); }
+  .activity-row .val { color: var(--text2); }
+
+  .targets-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .target-chip {
+    padding: 2px 7px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    font-size: 10px;
+    color: var(--text3);
+    font-family: var(--mono);
+  }
+
+  .activity-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 10px;
+    padding-top: 8px;
+    border-top: 1px solid var(--border);
+  }
+
+  .callback-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 10px;
+  }
+
+  .dot { width: 6px; height: 6px; border-radius: 50%; }
+  .dot-green { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .dot-red { background: var(--red); }
+  .dot-orange { background: var(--orange); animation: pulse 1.5s infinite; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.4; }
+  }
+
+  /* Pagination */
+  .pagination {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    justify-content: space-between;
+  }
+
+  .pagination-info { color: var(--text3); font-size: 11px; }
+
+  .page-btns { display: flex; gap: 4px; }
+  .page-btn {
+    width: 30px;
+    height: 30px;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    cursor: pointer;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    transition: all 0.15s;
+  }
+  .page-btn:hover { border-color: var(--border2); color: var(--text); }
+  .page-btn.current { background: var(--accent-glow); border-color: rgba(0,212,255,0.3); color: var(--accent); }
+  .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  /* Loading & Empty states */
+  .loading-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text3);
+  }
+
+  .spinner {
+    width: 28px;
+    height: 28px;
+    border: 2px solid var(--border2);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+    margin: 0 auto 12px;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .empty-state {
+    padding: 48px;
+    text-align: center;
+    color: var(--text3);
+    font-size: 12px;
+  }
+
+  .empty-icon { font-size: 32px; margin-bottom: 12px; }
+
+  /* Error state */
+  .error-state {
+    padding: 16px 20px;
+    background: var(--red-dim);
+    border: 1px solid rgba(255,82,82,0.2);
+    border-radius: 8px;
+    color: var(--red);
+    font-size: 12px;
+    margin-bottom: 16px;
+    display: none;
+  }
+
+  /* Resend modal */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    backdrop-filter: blur(4px);
+    z-index: 200;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 28px;
+    width: 420px;
+    box-shadow: 0 24px 80px rgba(0,0,0,0.6);
+    animation: modalIn 0.2s ease;
+  }
+
+  @keyframes modalIn {
+    from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .modal-title {
+    font-family: var(--sans);
+    font-size: 18px;
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+
+  .modal-sub { color: var(--text3); font-size: 12px; margin-bottom: 20px; }
+
+  .modal-field { margin-bottom: 16px; }
+  .modal-field label { display: block; color: var(--text3); font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 5px; }
+  .modal-field input {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 9px 12px;
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .modal-field input:focus { border-color: var(--accent2); }
+
+  .modal-actions { display: flex; gap: 8px; justify-content: flex-end; margin-top: 24px; }
+
+  .modal-result {
+    margin-top: 16px;
+    padding: 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    display: none;
+  }
+
+  .modal-result.success { background: var(--green-dim); border: 1px solid rgba(0,230,118,0.2); color: var(--green); }
+  .modal-result.queued { background: var(--orange-dim); border: 1px solid rgba(255,171,64,0.2); color: var(--orange); }
+  .modal-result.error { background: var(--red-dim); border: 1px solid rgba(255,82,82,0.2); color: var(--red); }
+
+  /* Toast */
+  .toast-container {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    z-index: 300;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .toast {
+    background: var(--surface2);
+    border: 1px solid var(--border2);
+    border-radius: 8px;
+    padding: 12px 16px;
+    font-size: 12px;
+    min-width: 260px;
+    animation: toastIn 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  @keyframes toastIn {
+    from { opacity: 0; transform: translateX(20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  .toast.success { border-color: rgba(0,230,118,0.3); }
+  .toast.error { border-color: rgba(255,82,82,0.3); }
+
+  /* Animations */
+  @keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Chevron expand */
+  .expand-chevron {
+    transition: transform 0.2s;
+    color: var(--text3);
+    font-size: 10px;
+  }
+  .expanded .expand-chevron { transform: rotate(90deg); }
+
+  /* Targets tab */
+  .target-table td:first-child { font-family: var(--mono); color: var(--text); }
+
+  /* scan-type pill */
+  .scan-type {
+    display: inline-flex;
+    padding: 2px 7px;
+    border-radius: 4px;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    font-weight: 600;
+  }
+  .scan-infrastructure { background: rgba(0,212,255,0.1); color: var(--accent); }
+  .scan-web { background: rgba(255,171,64,0.1); color: var(--orange); }
+  .scan-sourcecode { background: rgba(0,230,118,0.1); color: var(--green); }
+
+  /* Limit select */
+  select.filter-input {
+    cursor: pointer;
+    appearance: none;
+    padding-right: 28px;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%2364748b'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+  }
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<header class="header">
+  <div class="logo">INSIERA<span>-VA</span></div>
+  <div class="header-divider"></div>
+  <nav class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('groups')">Groups</button>
+    <button class="nav-tab" onclick="switchTab('targets')">Targets</button>
+    <button class="nav-tab" onclick="switchTab('resend')">Resend</button>
+  </nav>
+  <div class="header-right">
+    <div class="api-config">
+      <label>BASE URL</label>
+      <input type="text" id="baseUrl" value="https://localhost:8883" placeholder="https://...">
+    </div>
+    <div class="token-input">
+      <label>X-SECLABID</label>
+      <input type="text" id="authToken" value="SIERA_TEST_X_TOKEN" placeholder="token...">
+    </div>
+  </div>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- Stats -->
+  <div class="stats-bar" id="statsBar">
+    <div class="stat-card">
+      <div class="stat-icon blue">⬡</div>
+      <div class="stat-info">
+        <div class="stat-value" id="stat-groups" style="color:var(--accent)">—</div>
+        <div class="stat-label">Total Groups</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon green">◈</div>
+      <div class="stat-info">
+        <div class="stat-value" id="stat-activities" style="color:var(--green)">—</div>
+        <div class="stat-label">Activities</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon orange">◎</div>
+      <div class="stat-info">
+        <div class="stat-value" id="stat-open" style="color:var(--orange)">—</div>
+        <div class="stat-label">Open Scans</div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon red">⚑</div>
+      <div class="stat-info">
+        <div class="stat-value" id="stat-pending" style="color:var(--red)">—</div>
+        <div class="stat-label">Pending Callbacks</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ERROR -->
+  <div class="error-state" id="errorBanner"></div>
+
+  <!-- GROUPS TAB -->
+  <div class="tab-content active" id="tab-groups">
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Search Group ID</label>
+        <input class="filter-input" type="text" id="g-search" placeholder="partial match..." style="min-width:200px">
+      </div>
+      <div class="filter-group">
+        <label>Created By</label>
+        <input class="filter-input" type="text" id="g-user" placeholder="username...">
+      </div>
+      <div class="filter-group">
+        <label>From</label>
+        <input class="filter-input" type="date" id="g-from" style="min-width:140px">
+      </div>
+      <div class="filter-group">
+        <label>To</label>
+        <input class="filter-input" type="date" id="g-to" style="min-width:140px">
+      </div>
+      <div class="filter-group">
+        <label>Per Page</label>
+        <select class="filter-input" id="g-limit" style="min-width:80px">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="loadGroups(0)">⟳ Fetch</button>
+      <button class="btn btn-ghost" onclick="clearGroupFilters()">✕ Clear</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">Monitoring Groups</span>
+        <span class="table-meta" id="g-meta">—</span>
+      </div>
+      <div class="table-scroll">
+        <table id="groupsTable">
+          <thead>
+            <tr>
+              <th style="width:24px"></th>
+              <th onclick="sortGroups('group_id')">Group ID <span id="sort-group_id"></span></th>
+              <th onclick="sortGroups('status')">Status</th>
+              <th onclick="sortGroups('created_by')">Created By</th>
+              <th onclick="sortGroups('create_time')">Created At</th>
+              <th>Infra</th>
+              <th>Web</th>
+              <th>Source</th>
+              <th>Activities</th>
+              <th>Infra Status</th>
+              <th>Web Status</th>
+              <th>Code Status</th>
+            </tr>
+          </thead>
+          <tbody id="groupsTbody">
+            <tr><td colspan="12"><div class="loading-state"><div class="spinner"></div>Loading groups...</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="g-pagination"></div>
+    </div>
+  </div>
+
+  <!-- TARGETS TAB -->
+  <div class="tab-content" id="tab-targets">
+    <div class="filter-bar">
+      <div class="filter-group">
+        <label>Search Target</label>
+        <input class="filter-input" type="text" id="t-search" placeholder="IP, URL, or repo..." style="min-width:240px">
+      </div>
+      <div class="filter-group">
+        <label>Per Page</label>
+        <select class="filter-input" id="t-limit" style="min-width:80px">
+          <option value="10">10</option>
+          <option value="25">25</option>
+          <option value="50">50</option>
+          <option value="100" selected>100</option>
+        </select>
+      </div>
+      <button class="btn btn-primary" onclick="loadTargets(0)">⟳ Fetch</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('t-search').value=''; loadTargets(0)">✕ Clear</button>
+    </div>
+
+    <div class="table-wrap">
+      <div class="table-header">
+        <span class="table-title">Scan Targets</span>
+        <span class="table-meta" id="t-meta">—</span>
+      </div>
+      <div class="table-scroll">
+        <table id="targetsTable" class="target-table">
+          <thead>
+            <tr>
+              <th>Target ID</th>
+              <th>Target Name</th>
+              <th>Scan Type</th>
+              <th>Status</th>
+              <th>Group ID</th>
+              <th>Group Status</th>
+              <th>Group Created</th>
+            </tr>
+          </thead>
+          <tbody id="targetsTbody">
+            <tr><td colspan="7"><div class="empty-state"><div class="empty-icon">◉</div>Enter a search term to find targets</div></td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="pagination" id="t-pagination"></div>
+    </div>
+  </div>
+
+  <!-- RESEND TAB -->
+  <div class="tab-content" id="tab-resend">
+    <div style="max-width: 520px;">
+      <div class="table-wrap" style="border-radius:10px; overflow:visible;">
+        <div class="table-header">
+          <span class="table-title">Resend Activity to Core Scanner</span>
+        </div>
+        <div style="padding: 24px; display:flex; flex-direction:column; gap:16px;">
+          <p style="color:var(--text3); font-size:12px; line-height:1.6;">
+            Resend a specific activity to the core scanner. The activity must exist. Requires a valid <code style="color:var(--orange)">X-Seclabid</code> token configured in the header above.
+          </p>
+          <div class="filter-group">
+            <label>Activity ID</label>
+            <input class="filter-input" type="text" id="resend-activity-id" placeholder="act-001" style="min-width:300px; font-size:13px; padding:9px 12px;">
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-primary" onclick="resendActivity()" id="resend-btn">⟳ Resend Activity</button>
+            <button class="btn btn-ghost" onclick="document.getElementById('resend-activity-id').value=''; document.getElementById('resend-result').style.display='none'">✕ Clear</button>
+          </div>
+
+          <div id="resend-result" class="modal-result" style="display:none; margin-top:0;"></div>
+
+          <div style="margin-top:8px; padding-top:16px; border-top:1px solid var(--border);">
+            <div style="font-size:10px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text3); margin-bottom:10px;">Response Codes</div>
+            <div style="display:flex; flex-direction:column; gap:6px; font-size:11px;">
+              <div style="display:flex; gap:10px;"><span style="color:var(--green); width:70px;">200 sent</span><span style="color:var(--text3)">Activity successfully resent to core scanner</span></div>
+              <div style="display:flex; gap:10px;"><span style="color:var(--orange); width:70px;">200 queued</span><span style="color:var(--text3)">Core unavailable, added to retry queue</span></div>
+              <div style="display:flex; gap:10px;"><span style="color:var(--red); width:70px;">401</span><span style="color:var(--text3)">Missing or invalid X-Seclabid token</span></div>
+              <div style="display:flex; gap:10px;"><span style="color:var(--red); width:70px;">404</span><span style="color:var(--text3)">Activity ID not found</span></div>
+              <div style="display:flex; gap:10px;"><span style="color:var(--red); width:70px;">400</span><span style="color:var(--text3)">activity_id field is required</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Toast container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const API = {
+  get baseUrl() { return document.getElementById('baseUrl').value.replace(/\/$/, ''); },
+  get token() { return document.getElementById('authToken').value; },
+};
+
+let groupsData = [];
+let groupsPage = 0;
+let groupsPagination = {};
+let groupsSortKey = 'create_time';
+let groupsSortDir = -1;
+let expandedRows = new Set();
+
+let targetsPage = 0;
+let targetsPagination = {};
+
+// ─── TAB SWITCHING ───────────────────────────────────────────────────────────
+function switchTab(name) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  event.target.classList.add('active');
+}
+
+// ─── FETCH ────────────────────────────────────────────────────────────────────
+async function apiFetch(path, options = {}) {
+  try {
+    const headers = { 'Content-Type': 'application/json', 'X-Seclabid': API.token, ...options.headers };
+    const res = await fetch(API.baseUrl + path, { ...options, headers });
+    const data = await res.json();
+    return { ok: res.ok, status: res.status, data };
+  } catch (e) {
+    return { ok: false, status: 0, data: null, error: e.message };
+  }
+}
+
+// ─── GROUPS ──────────────────────────────────────────────────────────────────
+async function loadGroups(page = 0) {
+  groupsPage = page;
+  const tbody = document.getElementById('groupsTbody');
+  tbody.innerHTML = `<tr><td colspan="12"><div class="loading-state"><div class="spinner"></div>Fetching groups...</div></td></tr>`;
+  showError('');
+
+  const params = new URLSearchParams({ page, limit: document.getElementById('g-limit').value });
+  const search = document.getElementById('g-search').value.trim();
+  const user = document.getElementById('g-user').value.trim();
+  const from = document.getElementById('g-from').value;
+  const to = document.getElementById('g-to').value;
+  if (search) params.set('search', search);
+  if (user) params.set('user', user);
+  if (from) params.set('from', from + 'T00:00:00Z');
+  if (to) params.set('to', to + 'T23:59:59Z');
+
+  const res = await apiFetch(`/insiera-va/monitoring?${params}`);
+
+  if (!res.ok || !res.data) {
+    const msg = res.data?.message || res.error || `HTTP ${res.status}`;
+    showError(`Failed to load groups: ${msg}`);
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">⚠</div>${msg}</div></td></tr>`;
+    return;
+  }
+
+  groupsData = res.data.groups || [];
+  groupsPagination = res.data.pagination || {};
+  updateStats();
+  renderGroups();
+}
+
+function renderGroups() {
+  const tbody = document.getElementById('groupsTbody');
+  document.getElementById('g-meta').textContent =
+    `${groupsPagination.records || 0} records · page ${(groupsPagination.current || 0) + 1} of ${groupsPagination.pages || 1}`;
+
+  const sorted = [...groupsData].sort((a, b) => {
+    let av = a[groupsSortKey] || '', bv = b[groupsSortKey] || '';
+    if (typeof av === 'number') return (av - bv) * groupsSortDir;
+    return av.localeCompare(bv) * groupsSortDir;
+  });
+
+  if (!sorted.length) {
+    tbody.innerHTML = `<tr><td colspan="12"><div class="empty-state"><div class="empty-icon">⬡</div>No groups found</div></td></tr>`;
+    renderGroupsPagination();
+    return;
+  }
+
+  tbody.innerHTML = '';
+  sorted.forEach(g => {
+    // Main row
+    const tr = document.createElement('tr');
+    tr.id = `gr-${g.group_id}`;
+    if (expandedRows.has(g.group_id)) tr.classList.add('expanded');
+    tr.onclick = () => toggleExpand(g);
+    tr.innerHTML = `
+      <td><span class="expand-chevron">›</span></td>
+      <td><span class="group-id">${g.group_id}</span></td>
+      <td>${badge(g.status, 'created')}</td>
+      <td style="color:var(--text2)">${g.created_by}</td>
+      <td style="color:var(--text3)">${formatTime(g.create_time)}</td>
+      <td><span class="proj-pill proj-infra">${g.infra_projects}</span></td>
+      <td><span class="proj-pill proj-web">${g.web_projects}</span></td>
+      <td><span class="proj-pill proj-code">${g.sourcecode_projects}</span></td>
+      <td style="color:var(--text)">${g.total_activities}</td>
+      <td>${scanStatusBadge(g.infra_status)}</td>
+      <td>${scanStatusBadge(g.web_status)}</td>
+      <td>${scanStatusBadge(g.sourcecode_status)}</td>
+    `;
+    tbody.appendChild(tr);
+
+    // Expand row
+    const expTr = document.createElement('tr');
+    expTr.id = `exp-${g.group_id}`;
+    expTr.className = 'expand-row';
+    expTr.style.display = expandedRows.has(g.group_id) ? '' : 'none';
+    expTr.innerHTML = `<td colspan="12">${renderActivities(g.activities)}</td>`;
+    tbody.appendChild(expTr);
+  });
+
+  renderGroupsPagination();
+}
+
+function toggleExpand(g) {
+  if (expandedRows.has(g.group_id)) {
+    expandedRows.delete(g.group_id);
+    document.getElementById(`gr-${g.group_id}`).classList.remove('expanded');
+    document.getElementById(`exp-${g.group_id}`).style.display = 'none';
+  } else {
+    expandedRows.add(g.group_id);
+    document.getElementById(`gr-${g.group_id}`).classList.add('expanded');
+    document.getElementById(`exp-${g.group_id}`).style.display = '';
+  }
+}
+
+function renderActivities(activities) {
+  if (!activities || !activities.length) {
+    return `<div class="expand-content"><div class="empty-state" style="padding:20px">No activities for this group</div></div>`;
+  }
+  const cards = activities.map(a => {
+    const scannerClass = `scanner-${a.scanner?.toLowerCase()}`;
+    const cbColor = a.callback_received ? 'var(--green)' : 'var(--red)';
+    const cbLabel = a.callback_received ? 'Received' : 'Pending';
+    const dotClass = a.callback_received ? 'dot-green' : 'dot-red';
+    const targets = (a.targets || []).map(t => `<span class="target-chip">${t}</span>`).join('');
+    return `
+      <div class="activity-card">
+        <div class="activity-header">
+          <span class="activity-id">${a.activity_id}</span>
+          <span class="scanner-badge ${scannerClass}">${a.scanner || 'unknown'}</span>
+        </div>
+        <div class="activity-row"><span class="key">Project</span><span class="val">${a.project_id}</span></div>
+        <div class="activity-row"><span class="key">Scan ID</span><span class="val">${a.scan_id}</span></div>
+        <div class="targets-list">${targets}</div>
+        <div class="activity-footer">
+          <div class="callback-status">
+            <div class="dot ${dotClass}"></div>
+            <span style="color:${cbColor}">Callback ${cbLabel}</span>
+          </div>
+          <button class="btn btn-success" onclick="event.stopPropagation(); prefillResend('${a.activity_id}')">↺ Resend</button>
+        </div>
+      </div>`;
+  }).join('');
+  return `<div class="expand-content"><div class="expand-title">Activities (${activities.length})</div><div class="activity-grid">${cards}</div></div>`;
+}
+
+function renderGroupsPagination() {
+  const el = document.getElementById('g-pagination');
+  const { current = 0, pages = 1, records = 0, limit = 100 } = groupsPagination;
+  const start = current * limit + 1;
+  const end = Math.min((current + 1) * limit, records);
+  el.innerHTML = `
+    <span class="pagination-info">Showing ${records ? start + '–' + end : 0} of ${records}</span>
+    <div class="page-btns">
+      <button class="page-btn" onclick="loadGroups(${current - 1})" ${current === 0 ? 'disabled' : ''}>‹</button>
+      ${Array.from({length: pages}, (_, i) => `<button class="page-btn ${i === current ? 'current' : ''}" onclick="loadGroups(${i})">${i + 1}</button>`).join('')}
+      <button class="page-btn" onclick="loadGroups(${current + 1})" ${current >= pages - 1 ? 'disabled' : ''}>›</button>
+    </div>`;
+}
+
+function sortGroups(key) {
+  if (groupsSortKey === key) groupsSortDir *= -1;
+  else { groupsSortKey = key; groupsSortDir = 1; }
+  document.querySelectorAll('[id^="sort-"]').forEach(el => el.textContent = '');
+  const el = document.getElementById(`sort-${key}`);
+  if (el) el.textContent = groupsSortDir === 1 ? ' ↑' : ' ↓';
+  renderGroups();
+}
+
+function clearGroupFilters() {
+  ['g-search','g-user','g-from','g-to'].forEach(id => document.getElementById(id).value = '');
+  document.getElementById('g-limit').value = '100';
+}
+
+// ─── TARGETS ─────────────────────────────────────────────────────────────────
+async function loadTargets(page = 0) {
+  targetsPage = page;
+  const tbody = document.getElementById('targetsTbody');
+  tbody.innerHTML = `<tr><td colspan="7"><div class="loading-state"><div class="spinner"></div>Fetching targets...</div></td></tr>`;
+
+  const params = new URLSearchParams({ page, limit: document.getElementById('t-limit').value });
+  const search = document.getElementById('t-search').value.trim();
+  if (search) params.set('search', search);
+
+  const res = await apiFetch(`/insiera-va/monitoring/targets?${params}`);
+
+  if (!res.ok || !res.data) {
+    const msg = res.data?.message || res.error || `HTTP ${res.status}`;
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">⚠</div>${msg}</div></td></tr>`;
+    return;
+  }
+
+  const targets = res.data.targets || [];
+  targetsPagination = res.data.pagination || {};
+  document.getElementById('t-meta').textContent =
+    `${targetsPagination.records || 0} records · page ${(targetsPagination.current || 0) + 1} of ${targetsPagination.pages || 1}`;
+
+  if (!targets.length) {
+    tbody.innerHTML = `<tr><td colspan="7"><div class="empty-state"><div class="empty-icon">◉</div>No targets found</div></td></tr>`;
+    renderTargetsPagination();
+    return;
+  }
+
+  tbody.innerHTML = targets.map(t => `
+    <tr>
+      <td style="color:var(--text3); font-size:11px">${t.target_id}</td>
+      <td style="color:var(--text); font-weight:600">${t.target_name}</td>
+      <td><span class="scan-type scan-${t.scan_type}">${t.scan_type}</span></td>
+      <td>${t.status ? `<span class="badge badge-${t.status}">${t.status}</span>` : '—'}</td>
+      <td><span class="group-id" style="font-size:11px">${t.group_id}</span></td>
+      <td>${badge(t.group_status, 'created')}</td>
+      <td style="color:var(--text3)">${formatTime(t.group_create_time)}</td>
+    </tr>`).join('');
+
+  renderTargetsPagination();
+}
+
+function renderTargetsPagination() {
+  const el = document.getElementById('t-pagination');
+  const { current = 0, pages = 1, records = 0, limit = 100 } = targetsPagination;
+  const start = current * limit + 1;
+  const end = Math.min((current + 1) * limit, records);
+  el.innerHTML = records ? `
+    <span class="pagination-info">Showing ${start}–${end} of ${records}</span>
+    <div class="page-btns">
+      <button class="page-btn" onclick="loadTargets(${current - 1})" ${current === 0 ? 'disabled' : ''}>‹</button>
+      ${Array.from({length: Math.min(pages,10)}, (_, i) => `<button class="page-btn ${i === current ? 'current' : ''}" onclick="loadTargets(${i})">${i+1}</button>`).join('')}
+      <button class="page-btn" onclick="loadTargets(${current + 1})" ${current >= pages - 1 ? 'disabled' : ''}>›</button>
+    </div>` : '';
+}
+
+// ─── RESEND ───────────────────────────────────────────────────────────────────
+function prefillResend(activityId) {
+  document.getElementById('resend-activity-id').value = activityId;
+  switchTab('resend');
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.nav-tab')[2].classList.add('active');
+}
+
+async function resendActivity() {
+  const activityId = document.getElementById('resend-activity-id').value.trim();
+  if (!activityId) { toast('Please enter an activity_id', 'error'); return; }
+
+  const btn = document.getElementById('resend-btn');
+  const result = document.getElementById('resend-result');
+  btn.textContent = '...';
+  btn.disabled = true;
+  result.style.display = 'none';
+
+  const res = await apiFetch('/insiera-va/monitoring/resend', {
+    method: 'POST',
+    headers: { 'X-Seclabid': API.token },
+    body: JSON.stringify({ activity_id: activityId }),
+  });
+
+  btn.textContent = '⟳ Resend Activity';
+  btn.disabled = false;
+
+  if (!res.data) {
+    result.className = 'modal-result error';
+    result.textContent = `Network error: ${res.error || 'unknown'}`;
+    result.style.display = 'block';
+    return;
+  }
+
+  const d = res.data;
+  if (!res.ok) {
+    result.className = 'modal-result error';
+    result.textContent = `Error ${res.status}: ${d.message || d.error || 'Request failed'}`;
+    result.style.display = 'block';
+    return;
+  }
+
+  const cls = d.status === 'sent' ? 'success' : d.status === 'queued' ? 'queued' : 'error';
+  result.className = `modal-result ${cls}`;
+  result.innerHTML = `<strong>${d.status?.toUpperCase()}</strong> — ${d.message}<br>
+    <span style="opacity:0.7;font-size:11px">Scan ID: ${d.scan_id} · Scanner: ${d.scanner}</span>`;
+  result.style.display = 'block';
+  toast(`Activity ${d.status === 'sent' ? 'resent' : 'queued'}: ${activityId}`, d.status === 'sent' ? 'success' : 'error');
+}
+
+// ─── STATS ────────────────────────────────────────────────────────────────────
+function updateStats() {
+  const groups = groupsData;
+  const totalActs = groups.reduce((s, g) => s + (g.total_activities || 0), 0);
+  const openScans = groups.filter(g =>
+    g.infra_status === 'OPEN' || g.web_status === 'OPEN' || g.sourcecode_status === 'OPEN'
+  ).length;
+  const pendingCbs = groups.reduce((s, g) => {
+    return s + (g.activities || []).filter(a => !a.callback_received).length;
+  }, 0);
+
+  animateNum('stat-groups', groupsPagination.records || groups.length);
+  animateNum('stat-activities', totalActs);
+  animateNum('stat-open', openScans);
+  animateNum('stat-pending', pendingCbs);
+}
+
+function animateNum(id, target) {
+  const el = document.getElementById(id);
+  const start = parseInt(el.textContent) || 0;
+  const duration = 400;
+  const startTime = performance.now();
+  const animate = t => {
+    const progress = Math.min((t - startTime) / duration, 1);
+    el.textContent = Math.round(start + (target - start) * progress);
+    if (progress < 1) requestAnimationFrame(animate);
+  };
+  requestAnimationFrame(animate);
+}
+
+// ─── HELPERS ──────────────────────────────────────────────────────────────────
+function badge(val, matchClass) {
+  if (!val) return `<span class="badge badge-empty">—</span>`;
+  const cls = val.toLowerCase() === 'open' ? 'badge-open' :
+               val.toLowerCase() === 'closed' ? 'badge-closed' :
+               val.toLowerCase() === matchClass ? 'badge-created' : 'badge-created';
+  return `<span class="badge ${cls}">${val}</span>`;
+}
+
+function scanStatusBadge(val) {
+  if (!val) return `<span style="color:var(--text3); font-size:11px">—</span>`;
+  const cls = val === 'OPEN' ? 'badge-open' : val === 'CLOSED' ? 'badge-closed' : 'badge-empty';
+  return `<span class="badge ${cls}">${val}</span>`;
+}
+
+function formatTime(iso) {
+  if (!iso) return '—';
+  try {
+    const d = new Date(iso);
+    return d.toLocaleString('en-US', { month: 'short', day: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false });
+  } catch { return iso; }
+}
+
+function showError(msg) {
+  const el = document.getElementById('errorBanner');
+  el.textContent = msg;
+  el.style.display = msg ? 'block' : 'none';
+}
+
+function toast(msg, type = 'success') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.innerHTML = `<span>${type === 'success' ? '✓' : '!'}</span> ${msg}`;
+  document.getElementById('toastContainer').appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+// ─── KEYBOARD ─────────────────────────────────────────────────────────────────
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter') {
+    const tab = document.querySelector('.tab-content.active');
+    if (tab.id === 'tab-groups') loadGroups(0);
+    if (tab.id === 'tab-targets') loadTargets(0);
+  }
+});
+
+// ─── INIT ─────────────────────────────────────────────────────────────────────
+loadGroups(0);
+</script>
+</body>
+</html>
