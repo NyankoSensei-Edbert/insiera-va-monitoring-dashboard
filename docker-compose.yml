@@ -5,7 +5,7 @@ services:
       - "5050:5050"
     environment:
       # Point this at your real INSIERA-VA backend
-      BACKEND_URL: https://10.49.65.153:8883
-      VERIFY_SSL: "false"
-      PORT: "5050"
+      BACKEND_URL: ${BACKEND_URL}
+      VERIFY_SSL: ${VERIFY_SSL}
+      PORT: ${PORT}
     restart: unless-stopped
