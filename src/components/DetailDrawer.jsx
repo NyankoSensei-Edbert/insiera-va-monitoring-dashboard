@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react'
 import { formatTime } from '../lib/utils'
+import CopyCell from './CopyCell'
 
 /**
  * DetailDrawer — slides in from the right when a group or target is selected.
@@ -92,7 +93,7 @@ function GroupDetail({ group: g, onResend }) {
             {g.activities.map(a => (
               <div key={a.activity_id} className="activity-item">
                 <div className="activity-item-header">
-                  <div className="activity-item-id">{a.activity_id}</div>
+                  <CopyCell className="activity-item-id" value={a.activity_id}/>
                   <div style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
                     <span className={`scanner-badge scanner-${a.scanner?.toLowerCase()}`}>
                       {a.scanner}

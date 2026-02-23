@@ -6,6 +6,7 @@ import DataTable from './DataTable'
 import DetailDrawer from './DetailDrawer'
 import Pagination from './Pagination'
 import Badge from './Badge'
+import CopyCell from './CopyCell'
 
 export default function TargetsPage({ token, toast }) {
   const [search,       setSearch]       = useLocalStorage('targets:search', '')
@@ -35,7 +36,7 @@ export default function TargetsPage({ token, toast }) {
   const columns = [
     {
       key: 'target_id', label: 'Target ID',
-      render: (v) => <span style={{ color: 'var(--text3)', fontSize: 11 }}>{v}</span>,
+      render: (v) => <CopyCell value={v} style={{ color: 'var(--text3)', fontSize: 11 }} />,
     },
     {
       key: 'target_name', label: 'Target Name',
@@ -53,7 +54,7 @@ export default function TargetsPage({ token, toast }) {
     },
     {
       key: 'group_id', label: 'Group ID',
-      render: (v) => <span className="group-id" style={{ fontSize: 11 }}>{v}</span>,
+      render: (v) => <CopyCell value={v} style={{ fontSize: 11}} className={'group-id'}/>,
     },
     {
       key: 'group_status', label: 'Group Status',

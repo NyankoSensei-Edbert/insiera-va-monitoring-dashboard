@@ -6,6 +6,7 @@ import DataTable from './DataTable'
 import DetailDrawer from './DetailDrawer'
 import Pagination from './Pagination'
 import Badge from './Badge'
+import CopyCell from './CopyCell'
 
 export default function GroupsPage({ token, toast, onResend }) {
   const [filters, setFilters] = useLocalStorage('groups:filters', {
@@ -48,7 +49,7 @@ export default function GroupsPage({ token, toast, onResend }) {
   const columns = [
     {
       key: 'group_id', label: 'Group ID',
-      render: (v) => <span className="group-id">{v}</span>,
+      render: (v) => <CopyCell className="group-id" value={v} />,
     },
     {
       key: 'status', label: 'Status',
