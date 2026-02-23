@@ -19,8 +19,11 @@ Environment variables:
 import os
 import json
 import requests
+from dotenv import load_dotenv
 
 from flask import Flask, request, Response, send_from_directory
+
+load_dotenv()
 
 app = Flask(__name__, static_folder="dist")
 
